@@ -1,3 +1,9 @@
+# Author: Emily Taylor, for the Data Science Team in the Goetsch Lab at Michigan Technological University
+# Email: eetaylor@mtu.edu
+# Purpose: This map_accessions.py file contains all the functions pertaining to performing an id mapping to a different
+# database utilizing REST APIs, querying the uniprot server. The end product is a pandas dataframe containing all
+# mapping information pertinent to making sure that results from hmmer, blastx, and tblastn are comparable.
+
 import requests
 import pandas as pd
 import time
@@ -29,7 +35,10 @@ def submit_id_mapping(from_db, to_db, df):
     response.raise_for_status()
     return response.json()["jobId"]
 
-
+# get_entry(job_id) - this function checks the status of the job on the server side and updates via the console.
+# INPUT(job_id) - the id of the specific job, taken from the json returned by the initial post to the uniprot server to
+# initialize the query
+# RETURN void - this function simply stalls the execution of further code until the job is finished
 def get_entry(job_id):
     while True:
         status = check_status(job_id)
@@ -38,20 +47,31 @@ def get_entry(job_id):
         print("Waiting for mapping to finish")
         time.sleep(3)
 
-
+# check_status(job_id) - this function directly checks the status of the job from the job id. This function is used in
+# the get_entry function and is continually called until the job is finished.
+# INPUT job_id - the job id (string) used to access the status url
+# RETURN response.json() - the json object that contains the information about the status of the job.
+# Returns to get_entry function as that is sole usage
+# TODO: Implement check_status recursively utilizing code from get_entry. Get rid of get_entry
 def check_status(job_id):
     status_url = f"https://rest.uniprot.org/idmapping/status/{job_id}"
     response = requests.get(status_url)
     response.raise_for_status()
     return response.json()
 
-
+# get_results(job_id) - this function returns a json containing the results of the given job id
+# INPUT job_id - the specific job id provided by the submit_id_mapping function
+# RETURN response.json() - the json object containing the results of the query
 def get_results(job_id):
     result_url = f"https://rest.uniprot.org/idmapping/results/{job_id}"
     response = requests.get(result_url)
     response.raise_for_status()
     return response.json()
 
+# parse_mapped_results(json_data) - creates a pandas dataframe containing all the mapping information of the mapped ids
+# (database from & associated id, database to & associated id)
+# INPUT json_data - the mapping data in the json, provided by the get_results function
+# RETURN pd.DataFrame(parsed) - a pandas datafram containing the parsed information from the json (see description above)
 def parse_mapped_results(json_data):
     results = json_data["results"]
     parsed = []

@@ -1,3 +1,9 @@
+# Author: Emily Taylor, for the Data Science Team in the Goetsch Lab at Michigan Technological University
+# Email: eetaylor@mtu.edu
+# Purpose: This main.py file serves as the driver script for the sequence search venn diagram pipeline, automating
+# searches to blastx, tblastn, and hmmer, combining the resulting hits, and creating a venn diagram of the resulting
+# hits based on their search method of origin.
+
 import blast_query
 import hmmer_query
 import pandas as pd

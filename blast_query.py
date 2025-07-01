@@ -1,3 +1,9 @@
+# Author: Emily Taylor, for the Data Science Team in the Goetsch Lab at Michigan Technological University
+# Email: eetaylor@mtu.edu
+# Purpose: This blast_query.py file contains all the functions pertaining to performing a blastx and tblastn search
+# utilizing REST APIs, querying the ncbi server. The end product is a pandas dataframe containing all information
+# pertinent to the search that was extracted from the results xml.
+
 from yaspin import yaspin
 import pandas as pd
 from Bio import Entrez, SeqIO

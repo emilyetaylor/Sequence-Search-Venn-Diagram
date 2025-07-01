@@ -1,3 +1,11 @@
+# Author: Emily Taylor, for the Data Science Team in the Goetsch Lab at Michigan Technological University
+# Email: eetaylor@mtu.edu
+# Purpose: This test_module.py file contains all the functions pertaining to performing all automated blastx, tblastn,
+# and hmmer queries, as well as extracting information from the query's respective jsons and xml results files, and
+# parsing the resulting data into pandas dataframes. The resulting data will then be mapped so the ids of all hit
+# sequences are comparable, which will serve to combine all hit sequences from all search methods and help to create
+# a venn diagram showcasing the differing results of each search method.
+
 import pytest
 import pandas as pd
 from unittest.mock import patch, Mock, MagicMock
@@ -52,10 +60,11 @@ MOCK_RESULT_RESPONSE = {
 }
 
 # -------------------------------
-# Tests
+# hmmer_query.py tests
 # -------------------------------
 
-#
+# This function tests the submit_hmmer_search function in hmmer_query.py.
+# It passes when the correct job_id is returned given a mock API post request (quality parameter)
 @patch("hmmer_query.requests.post")
 def test_submit_hmmer_search(mock_post):
     mock_response = Mock()
@@ -67,6 +76,11 @@ def test_submit_hmmer_search(mock_post):
     assert job_id == MOCK_JOB_ID
     mock_post.assert_called_once()
 
+# TODO: create test cases for submit_hmmer_search with bad parameter(s) and edge cases. Analyze errors that are raised.
+
+# This function tests the wait_for_completion function in hmmer_query.py.
+# It passes when the first call to the mock api returns 'STARTED', and the second call returns 'SUCCESS', and when the
+# result response is returned as an instance, as expected in a specific format.
 @patch("hmmer_query.requests.get")
 def test_wait_for_completion(mock_get):
     # First call returns STARTED, second returns SUCCESS
@@ -80,6 +94,10 @@ def test_wait_for_completion(mock_get):
     assert "result" in result
     assert isinstance(result["result"]["hits"], list)
 
+# TODO: create test cases for wait_for_completion with bad parameter(s) and edge cases. Analyze errors that are raised.
+
+# This function tests the parse_results function in hmmer_query.py.
+# It passes when the format of the data from the mock api request matches the specified format.
 @patch("builtins.print")  # to suppress print output during test
 def test_parse_results(mock_print):
     df = parse_results(MOCK_RESULT_RESPONSE)
@@ -89,14 +107,20 @@ def test_parse_results(mock_print):
     assert df.iloc[0]["accession"] == "P12345"
     assert df.iloc[0]["species"] == "Escherichia coli"
 
+# TODO: create test cases for parse_results with bad inputs and edge cases. Analyze errors that are raised.
 
-# Mock protein sequence record
+# -------------------------------
+# Mock data for blast_query tests
+# -------------------------------
+# Mock protein sequence record to be used for testing blast_query.py
 mock_protein = SeqRecord(Seq("MKTIIALSYIFCLVFADYKDDDDK"), id="NP_000240.1", description="Mock protein")
 
+# -----------------------------
+# blast_query.py tests
+# -----------------------------
 
-# -----------------------------
-# fetch_protein_sequence
-# -----------------------------
+# This function tests the fetch_protein_sequence function in blast_query.py.
+# It passes when the correct protein sequence ncbi accession number is returned.
 @patch("blast_query.Entrez.efetch")
 @patch("blast_query.SeqIO.read")
 def test_fetch_protein_sequence(mock_read, mock_efetch):
@@ -108,19 +132,21 @@ def test_fetch_protein_sequence(mock_read, mock_efetch):
     assert result.id == "NP_000240.1"
     mock_efetch.assert_called_once()
 
+# TODO: create test cases for fetch_protein_sequence with bad inputs and edge cases. Analyze errors that are raised.
 
-# -----------------------------
-# convert_seqrecord_to_fasta
-# -----------------------------
+# This function tests the convert_seqrecord_to_fasta function in blast_query.py.
+# It passes when the a string containing the correct protein sequence is returned.
 def test_convert_seqrecord_to_fasta():
     fasta_str = convert_seqrecord_to_fasta(mock_protein)
     assert fasta_str.startswith(">NP_000240.1")
     assert "MKTIIALSYIFCLVFADYKDDDDK" in fasta_str
 
 
-# -----------------------------
-# run_blastp
-# -----------------------------
+# TODO: create test cases for convert_seqrecord_to_fasta with bad inputs and edge cases. Analyze errors that are raised.
+
+# This function tests the run_blastp function in blast_query.py.
+# It passes when the result returned from the mock API is not None - e.g. the function simply needs to return something.
+# TODO: edit this test to increase specificity in terms of result. What should the function actually be returning?
 @patch("blast_query.NCBIWWW.qblast")
 @patch("blast_query.yaspin")  # Suppress spinner for test
 def test_run_blastp(mock_spinner, mock_qblast):
@@ -131,10 +157,10 @@ def test_run_blastp(mock_spinner, mock_qblast):
     assert result is not None
     mock_qblast.assert_called_once()
 
+# TODO: create test cases for run_blastp with bad inputs and edge cases. Analyze errors that are raised.
 
-# -----------------------------
-# get_mrna_from_protein
-# -----------------------------
+# This function tests the get_mrna_from_protein function in blast_query.py.
+# It passes when the result id returned from the mock api matches the expected result id.
 @patch("blast_query.SeqIO.read")
 @patch("blast_query.Entrez.efetch")
 @patch("blast_query.Entrez.elink")
@@ -149,6 +175,7 @@ def test_get_mrna_from_protein(mock_read, mock_elink, mock_efetch, mock_seqread)
     result = get_mrna_from_protein(mock_protein)
     assert result.id == "XM_123456.1"
 
+# TODO: create more test cases for get_mrna_from_protein with bad inputs and edge cases. Analyze errors that are raised.
 
 # -----------------------------
 # parse_blast_results

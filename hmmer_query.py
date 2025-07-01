@@ -1,3 +1,9 @@
+# Author: Emily Taylor, for the Data Science Team in the Goetsch Lab at Michigan Technological University
+# Email: eetaylor@mtu.edu
+# Purpose: This hmmer_query.py file contains all the functions pertaining to performing a hmmer search utilizing REST
+# APIs, querying the ebi server. The end product is a pandas dataframe containing all information pertinent to the
+# search that was extracted from the results json.
+
 import requests
 import time
 import pandas as pd
