@@ -177,9 +177,9 @@ def test_get_mrna_from_protein(mock_read, mock_elink, mock_efetch, mock_seqread)
 
 # TODO: create more test cases for get_mrna_from_protein with bad inputs and edge cases. Analyze errors that are raised.
 
-# -----------------------------
-# parse_blast_results
-# -----------------------------
+# This function tests the parse_blast_results function from blast_query.py.
+# It passes when the resulting df is not empty and the hit id matches the mock hit id.
+# TODO: make this test case stronger by assessing more elements of the returned df.
 @patch("blast_query.NCBIXML.read")
 def test_parse_blast_results(mock_read):
     # Mock HSP and alignment
@@ -212,15 +212,21 @@ def test_parse_blast_results(mock_read):
     assert not df.empty
     assert df.iloc[0]["hit_id"] == "sp|P12345|"
 
+# TODO: create more test cases for parse_blast_results with bad inputs and edge cases. Analyze errors that are raised.
 
-# Sample DataFrame for testing
+# ----------------------------------------------
+# Sample dataframe for testing map_accession.py
+# ----------------------------------------------
 @pytest.fixture
 def sample_df():
     return pd.DataFrame({"accession": ["P12345", "Q67890", "A1B2C3", None]})
 
 # -----------------------------
-# submit_id_mapping
+# map_accession.py tests
 # -----------------------------
+
+# This function tests the submit_id_mapping function in map_accession.py.
+# It passes when the function returns the expected job id from the mock api
 @patch("map_accessions.requests.post")
 def test_submit_id_mapping(mock_post, sample_df):
     mock_response = MagicMock()
@@ -232,9 +238,12 @@ def test_submit_id_mapping(mock_post, sample_df):
     assert job_id == "mock_job_123"
     mock_post.assert_called_once()
 
-# -----------------------------
-# check_status
-# -----------------------------
+# TODO: create more test cases for submit_id_mapping with bad inputs and edge cases. Analyze errors that are raised.
+
+# This function tests the check_status function in map_accessions.py.
+# It passes when the first request to the mock job returns 'RUNNING'.
+# NOTE: this may be deleted when I try to combine check_status and get_entry functions.
+# TODO: add in the contingency that the second request should return 'FINISHED' or equivalent status message.
 @patch("map_accessions.requests.get")
 def test_check_status(mock_get):
     mock_response = MagicMock()
@@ -246,9 +255,10 @@ def test_check_status(mock_get):
     assert status["jobStatus"] == "RUNNING"
     mock_get.assert_called_once()
 
-# -----------------------------
-# get_entry
-# -----------------------------
+# TODO: create more test cases for check_status with bad inputs and edge cases. Analyze errors that are raised.
+
+# This function tests the get_entry function in map_accessions.
+# It passes when the first request returns 'RUNNING' and the second request returns 'FINISHED'.
 @patch("map_accessions.time.sleep", return_value=None)
 @patch("map_accessions.check_status")
 def test_get_entry(mock_check_status, mock_sleep):
@@ -262,9 +272,10 @@ def test_get_entry(mock_check_status, mock_sleep):
     assert mock_check_status.call_count == 2
     mock_sleep.assert_called_once()
 
-# -----------------------------
-# get_results
-# -----------------------------
+# TODO: create more test cases for get_entry with bad inputs and edge cases. Analyze errors that are raised.
+
+# This function tests the get_results function in map_accessions.py.
+# It passes when there a results json is returned containing the correct information as specified by the mock api
 @patch("map_accessions.requests.get")
 def test_get_results(mock_get):
     mock_response = MagicMock()
@@ -276,9 +287,10 @@ def test_get_results(mock_get):
     assert "results" in results
     assert results["results"][0]["from"] == "P12345"
 
-# -----------------------------
-# parse_mapped_results
-# -----------------------------
+# TODO: create more test cases for get_results with bad inputs and edge cases. Analyze errors that are raised.
+
+# This function tests the parse_mapped_results function in map_accessions.py.
+# It passes when the function returns a parsed dataframe that matches the sample test dataframe.
 def test_parse_mapped_results():
     sample_json = {
         "results": [
@@ -292,3 +304,5 @@ def test_parse_mapped_results():
     assert df.shape[0] == 2
     assert set(df.columns) == {"uniprot", "mapped_id"}
     assert df.iloc[0]["mapped_id"] == "XP_123456"
+
+# TODO: create more test cases for parse_mapped_results with bad inputs and edge cases. Analyze errors that are raised.
