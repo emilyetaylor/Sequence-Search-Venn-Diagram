@@ -34,10 +34,12 @@ def submit_hmmer_search(fasta_sequence):
 # to the status url every three seconds. An error will be raised if an unknown status is returned.
 # INPUT job_id: a string containing the unique job id from the submission (performed in submit_hmmer_search)
 # RETURN result_resp.json() - the json object containing the results from the initial query. Recieved from the result_url
-def wait_for_completion(job_id):
+def wait_for_completion(job_id, max_retries = 10):
     status_url = f"https://www.ebi.ac.uk/Tools/hmmer/api/v1/result/{job_id}"
     result_url = f"https://www.ebi.ac.uk/Tools/hmmer/api/v1/result/{job_id}"
     headers = {"Accept" : "application/json"}
+
+    retries = 0
     while True:
         resp = requests.get(status_url, headers=headers)
         resp.raise_for_status()
@@ -48,8 +50,13 @@ def wait_for_completion(job_id):
             print("Still running...")
             time.sleep(3)
         elif status == "RETRY":
-            print(f"Status is RETRY - trying again")
-            print("Raw status response:", json.dumps(data, indent=2))
+            if retries < max_retries:
+                retries+=1
+                print(f"Status is RETRY - attempt {retries}/{max_retries}")
+                print("Raw status response:", json.dumps(data, indent=2))
+                time.sleep(5)
+            else:
+                raise RuntimeError("Exceeded max retries for RETRY status.")
         elif status == "SUCCESS":
             print("Job completed. Fetching results...")
             result_resp = requests.get(result_url, headers = headers)
