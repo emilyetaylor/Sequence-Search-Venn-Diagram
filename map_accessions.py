@@ -7,7 +7,6 @@
 import requests
 import pandas as pd
 import time
-
 # submit_id_mapping(from_db, to_db, df) - this function will submit an list of accessions, to uniprot, to get each accession's
 # unique id for another database. It will return the number of ids submitted for mapping, and will return a job id string
 # INPUT from_db - the database where the provided ids are coming from
@@ -29,8 +28,7 @@ def submit_id_mapping(from_db, to_db, df):
     print("=== SUBMITTING ID MAPPING REQUEST ===")
     print("From:", from_db)
     print("To:", to_db)
-    print("First 5 IDs:", accession_list[:5])
-    print("Total IDs:", len(accession_list))
+    print("Total IDs submitted:", len(accession_list))
     response = requests.post(url, data = payload, headers=headers)
     response.raise_for_status()
     return response.json()["jobId"]
@@ -73,10 +71,34 @@ def get_results(job_id):
 # INPUT json_data - the mapping data in the json, provided by the get_results function
 # RETURN pd.DataFrame(parsed) - a pandas datafram containing the parsed information from the json (see description above)
 def parse_mapped_results(json_data):
-    results = json_data["results"]
+    results = json_data.get("results", [])
+    failed_ids = json_data.get("failedIds", [])
     parsed = []
+
     for entry in results:
         from_id = entry["from"]
         to_id = entry["to"]
         parsed.append({"uniprot": from_id, "mapped_id": to_id})
-    return pd.DataFrame(parsed)
+
+
+    return pd.DataFrame(parsed), failed_ids
+
+def blast_mapping(df):
+    blast_mapped = []     # refseq
+    blast_mapping = []
+    for entry in df:
+        if entry['hit_id'].startswith('ref'):
+            blast_mapping.append(entry)
+        elif entry['hit_id'].startswith('gb', 'emb', 'dbj'):
+            blast_mapping.append(entry)
+
+    job_id = submit_id_mapping("EMBL-GenBank-DDBJ", "RefSeq_Protein", blast_mapping)
+
+    results_json = get_results(job_id)
+    blast_mapped_df, blast_failed_ids = parse_mapped_results(results_json)
+
+    blast_mapped_df+=blast_mapped
+
+    return blast_mapped_df, blast_failed_ids
+
+

@@ -10,6 +10,8 @@ import pandas as pd
 import json
 import map_accessions
 
+# Test sequence: C. elegans lin-9 NP_001023016
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
@@ -21,8 +23,6 @@ if __name__ == '__main__':
 
     record = blast_query.fetch_protein_sequence(accession)
     sequence = blast_query.convert_seqrecord_to_fasta(record)
-    print(sequence)
-    # print(consensus_species + " " + protein + " record: " + record)
     # result_handle_blastp = blast_query.run_blastp(record)
     # blastp_df =blast_query.parse_blast_results(result_handle_blastp)
     #
@@ -31,13 +31,13 @@ if __name__ == '__main__':
     # # Start blastx search
     # result_handle_blastx = blast_query.run_blastx(record)
     # blastx_df = blast_query.parse_blast_results(result_handle_blastx)
-    #
-    # print(blastx_df.head())
+
+
+
 
     # Start hmmer search
     job_id = hmmer_query.submit_hmmer_search(sequence)
     results = hmmer_query.wait_for_completion(job_id)
-    print(json.dumps(results, indent=2))
 
     hmmer_df = hmmer_query.parse_results(results)
 
@@ -45,12 +45,33 @@ if __name__ == '__main__':
 
     # Get proper ids from uniprot ID mapping service
 
+# Start hmmer mapping
+    job_id = hmmer_query.submit_hmmer_search(sequence)
+    results = hmmer_query.wait_for_completion(job_id)
+    hmmer_df = hmmer_query.parse_results(results)
+
+    print(hmmer_df.head())
+
+    # Get proper ids from uniprot ID mapping service
+
+    #Hmmer mapping
     job_id = map_accessions.submit_id_mapping("UniProtKB_AC-ID","RefSeq_Protein", hmmer_df)
     results_json = map_accessions.get_results(job_id)
-    df = map_accessions.parse_mapped_results(results_json)
-    print(df.head())
+    df, failed_ids = map_accessions.parse_mapped_results(results_json)
+    print(f"Mapped Ids: {len(df)}, Failed Ids: {len(failed_ids)}")
+    print(f"Failed Ids: {failed_ids}")
+
+    #hmmer_results = df + failed_ids
+
+    # Blastp
+
+    blastp_results, blastp_failed_ids = map_accessions.blast_mapping(blastp_df)
+
+    # Blastx
+
+    blastx_results, blastx_failed_ids = map_accessions.blast_mapping(blastx_df)
+
 
     # Start comparison of accessions and venn diagram
-    accession_df = ...      # should be titled using name of consensus species, protein, and original accession
-    vennDiagram_img = ...   # should be titled using name of consensus species, protein, and original accession
 
+    vennDiagram_img = ...   # should be titled using name of consensus species, protein, and original accession

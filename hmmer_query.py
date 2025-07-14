@@ -44,9 +44,12 @@ def wait_for_completion(job_id):
         data = resp.json()
         status = data.get("status", "")
 
-        if status == "STARTED":
+        if status in ("STARTED", "RUNNING", "STARTED"):
             print("Still running...")
             time.sleep(3)
+        elif status == "RETRY":
+            print(f"Status is RETRY - trying again")
+            print("Raw status response:", json.dumps(data, indent=2))
         elif status == "SUCCESS":
             print("Job completed. Fetching results...")
             result_resp = requests.get(result_url, headers = headers)

@@ -42,9 +42,9 @@ def run_blastp(sequence_record):
     with yaspin(text = "Running BLASTp search. This could take a while...") as spinner:
         result_handle = NCBIWWW.qblast(
             program="blastp",
-            database="swissprot",  # or 'nr' if you prefer
+            database="nr",  # or 'nr' if you prefer
             sequence=sequence_record.format("fasta"),
-            hitlist_size=5  # adjust as needed
+            hitlist_size=100  # adjust as needed
         )
         spinner.ok("✅ ")
     print("BLASTp search completed")
@@ -62,7 +62,7 @@ def run_blastx(sequence_record):
             program="blastx",
             database = "nr",
             sequence = trans_nucleotide.format("fasta"),
-            hitlist_size=5
+            hitlist_size=100
         )
         spinner.ok("✅ ")
     print("BLASTx search completed")
@@ -119,12 +119,12 @@ def parse_blast_results(result_handle):
     for alignment in blast_record.alignments:
         for hsp in alignment.hsps:
             rows.append({
-                # "query": blast_record.query,
+                "query": blast_record.query,
                 "hit_id": alignment.hit_id,
                 "hit_def": alignment.hit_def,
                 "accession": alignment.accession,
-                # "evalue": hsp.expect,
-                # "identity": hsp.identities,
+                "evalue": hsp.expect,
+                "identity": hsp.identities,
                 # "align_length": hsp.align_length,
                 # "bit_score": hsp.bits,
                 # "percent_identity": (hsp.identities / hsp.align_length) * 100 if hsp.align_length > 0 else 0,
